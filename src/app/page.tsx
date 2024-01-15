@@ -119,7 +119,7 @@ const Page = (props: Props) => {
   }, [model, mirrored, webcamRef, autoRecord]);
 
   return (
-    <div className="flex-col flex md:flex-row h-screen">
+    <div className="flex-col flex md:flex-row  h-screen">
       <div className="relative h-full w-full">
         <div className="relative h-full w-full">
           <Webcam
@@ -134,7 +134,7 @@ const Page = (props: Props) => {
         </div>
       </div>
       {/* right side bar */}
-      <div className="border-primary/5 border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
+      <div className="border-primary/5 -mt-20 border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
         <div className="flex flex-row md:flex-col gap-2">
           <ModeToggle />
           <Button
@@ -197,7 +197,7 @@ const Page = (props: Props) => {
     </div>
   );
 
-  // handle functions
+  // handle function
 
   function userPromptScreenshot() {
     // take picture
