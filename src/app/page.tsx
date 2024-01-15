@@ -66,7 +66,8 @@ const Page = (props: Props) => {
       webcamRef.current?.video.readyState === 4
     ) {
       const predictions = await model.detect(webcamRef.current?.video);
-      console.log(predictions);
+      // console.log(predictions);
+      resizeCanvas(canvasRef, webcamRef);
     }
   }
 
@@ -193,3 +194,14 @@ const Page = (props: Props) => {
 };
 
 export default Page;
+function resizeCanvas(
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  webcamRef: React.RefObject<Webcam>
+) {
+  const canvas = canvasRef.current;
+  const webcam = webcamRef.current?.video;
+  if (canvas && webcam) {
+    canvas.width = webcam.videoWidth;
+    canvas.height = webcam.videoHeight;
+  }
+}
