@@ -2,7 +2,7 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -20,7 +20,12 @@ import {
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { beep } from "@/utils/audio";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import "@tensorflow/tfjs-backend-webgl";
+import "@tensorflow/tfjs-backend-cpu";
+import { Loader } from "@/components/loader";
 interface Props {}
+let interval: NodeJS.Timeout;
 
 const Page = (props: Props) => {
   const webcamRef = useRef<Webcam>(null);
@@ -30,6 +35,50 @@ const Page = (props: Props) => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [autoRecord, setAutoRecord] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(0.7);
+  const [model, setModel] = useState<cocoSsd.ObjectDetection>();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    initModel();
+  }, []);
+
+  useEffect(() => {
+    if (model) {
+      setIsLoading(false);
+    }
+  }, [model]);
+
+  // load model
+  async function initModel() {
+    const loadedModel: cocoSsd.ObjectDetection = await cocoSsd.load({
+      base: "lite_mobilenet_v2",
+    });
+    setModel(loadedModel);
+  }
+
+  // run prediction
+  async function runPrediction() {
+    if (
+      model &&
+      webcamRef.current &&
+      webcamRef.current?.video &&
+      webcamRef.current?.video.readyState === 4
+    ) {
+      const predictions = await model.detect(webcamRef.current?.video);
+      console.log(predictions);
+    }
+  }
+
+  useEffect(() => {
+    interval = setInterval(() => {
+      runPrediction();
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [model]);
+
   return (
     <div className="flex h-screen">
       <div className="relative">
@@ -115,6 +164,7 @@ const Page = (props: Props) => {
           </div>
         </div>
       </div>
+      {isLoading && <Loader />}
     </div>
   );
 
