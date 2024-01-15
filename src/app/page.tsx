@@ -134,7 +134,7 @@ const Page = (props: Props) => {
         </div>
       </div>
       {/* right side bar */}
-      <div className="border-primary/5  absolute bottom-0 w-full md:w-fit md:relative border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
+      <div className="border-primary/5  fixed bottom-0 w-full md:w-fit md:relative border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
         <div className="flex flex-row md:flex-col gap-2">
           <ModeToggle />
           <Button
