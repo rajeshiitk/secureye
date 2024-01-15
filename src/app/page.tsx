@@ -24,6 +24,7 @@ import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs-backend-webgl";
 import "@tensorflow/tfjs-backend-cpu";
 import { Loader } from "@/components/loader";
+import { drawOnCanvas } from "@/utils/drawOnCanvas";
 interface Props {}
 let interval: NodeJS.Timeout;
 
@@ -65,9 +66,12 @@ const Page = (props: Props) => {
       webcamRef.current?.video &&
       webcamRef.current?.video.readyState === 4
     ) {
-      const predictions = await model.detect(webcamRef.current?.video);
+      const predictions: cocoSsd.DetectedObject[] = await model.detect(
+        webcamRef.current?.video
+      );
       // console.log(predictions);
       resizeCanvas(canvasRef, webcamRef);
+      drawOnCanvas(mirrored, predictions, canvasRef.current?.getContext("2d"));
     }
   }
 
@@ -78,7 +82,7 @@ const Page = (props: Props) => {
     return () => {
       clearInterval(interval);
     };
-  }, [model]);
+  }, [model, mirrored]);
 
   return (
     <div className="flex h-screen">
