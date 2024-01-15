@@ -2,18 +2,9 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
-import {
-  Camera,
-  Cctv,
-  CctvIcon,
-  FlipHorizontal,
-  LucideCctv,
-  SwitchCamera,
-  Video,
-  Volume2,
-} from "lucide-react";
+import { Camera, Cctv, FlipHorizontal, Video, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Rings } from "react-loader-spinner";
 import {
@@ -29,7 +20,6 @@ import "@tensorflow/tfjs-backend-cpu";
 import { Loader } from "@/components/loader";
 import { drawOnCanvas } from "@/utils/drawOnCanvas";
 import { formatDate } from "@/utils/formatDate";
-import { run } from "node:test";
 import { base64toBlob } from "@/utils/base64ToBlob";
 interface Props {}
 let interval: NodeJS.Timeout;
@@ -114,7 +104,6 @@ const Page = (props: Props) => {
 
         if (isPerson && autoRecord) {
           startRecording(true);
-          console.log("Recording started");
         }
       }
     }
@@ -127,7 +116,7 @@ const Page = (props: Props) => {
     return () => {
       clearInterval(interval);
     };
-  }, [model, mirrored, runPrediction, autoRecord]);
+  }, [model, mirrored, webcamRef, autoRecord]);
 
   return (
     <div className="flex-col flex md:flex-row h-screen">
@@ -245,12 +234,14 @@ const Page = (props: Props) => {
   function startRecording(doBeep: boolean) {
     if (webcamRef.current && mediaRecorderRef.current?.state !== "recording") {
       mediaRecorderRef.current?.start();
+      toast("Recording started");
       doBeep && beep(volume);
 
       stopTimeout = setTimeout(() => {
         if (mediaRecorderRef.current?.state === "recording") {
           mediaRecorderRef.current.requestData();
           mediaRecorderRef.current.stop();
+          toast("Recording saved to downloads");
         }
       }, 30000);
     }
