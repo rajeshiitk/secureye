@@ -6,7 +6,10 @@ import React, { use, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
+  Cctv,
+  CctvIcon,
   FlipHorizontal,
+  LucideCctv,
   SwitchCamera,
   Video,
   Volume2,
@@ -127,9 +130,9 @@ const Page = (props: Props) => {
   }, [model, mirrored, runPrediction, autoRecord]);
 
   return (
-    <div className="flex h-screen">
-      <div className="relative">
-        <div className="relative h-screen w-full">
+    <div className="flex-col flex md:flex-row h-screen">
+      <div className="relative h-full w-full">
+        <div className="relative h-full w-full">
           <Webcam
             ref={webcamRef}
             mirrored={mirrored}
@@ -142,73 +145,63 @@ const Page = (props: Props) => {
         </div>
       </div>
       {/* right side bar */}
-      <div className="flex flex-row flex-1">
-        <div className="border-primary/5 border-2 max-w-xs  flex flex-col gap-2 justify-between shadow-md rounded-md p-4">
-          <div className="flex flex-col gap-2">
-            <ModeToggle />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setMirrored((prev) => !prev);
-              }}
-            >
-              <FlipHorizontal />
-            </Button>
-            <Separator className="my-2" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Separator className="my-2" />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={userPromptScreenshot}
-            >
-              <Camera />
-            </Button>
-            <Button
-              variant={isRecording ? "destructive" : "outline"}
-              size="icon"
-              onClick={userPromptRecord}
-            >
-              <Video />
-            </Button>
-            <Button
-              variant={autoRecord ? "destructive" : "outline"}
-              size="icon"
-              onClick={toggleAutoRecord}
-            >
-              {autoRecord ? (
-                <Rings color="white" height={45} />
-              ) : (
-                <SwitchCamera />
-              )}
-            </Button>
-            <Separator className="my-2" />
-          </div>
+      <div className="border-primary/5 border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
+        <div className="flex flex-row md:flex-col gap-2">
+          <ModeToggle />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setMirrored((prev) => !prev);
+            }}
+          >
+            <FlipHorizontal />
+          </Button>
+          <Separator className="hidden md:block md:my-2" />
+        </div>
+        <div className="flex flex-row md:flex-col gap-2">
+          <Separator className="hidden md:block md:my-2" />
+          <Button variant="outline" size="icon" onClick={userPromptScreenshot}>
+            <Camera />
+          </Button>
+          <Button
+            variant={isRecording ? "destructive" : "outline"}
+            size="icon"
+            onClick={userPromptRecord}
+          >
+            <Video />
+          </Button>
+          <Button
+            variant={autoRecord ? "destructive" : "outline"}
+            size="icon"
+            onClick={toggleAutoRecord}
+          >
+            {autoRecord ? <Rings color="white" height={45} /> : <Cctv />}
+          </Button>
+          <Separator className="hidden md:block md:my-2" />
+        </div>
 
-          <div className="flex flex-col gap-2">
-            <Separator className="my-2" />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Volume2 />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent>
-                <Slider
-                  max={1}
-                  min={0}
-                  step={0.1}
-                  defaultValue={[volume]}
-                  onValueCommit={(val) => {
-                    setVolume(val[0]);
-                    beep(val[0]);
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+        <div className="flex flex-row md:flex-col gap-2">
+          <Separator className="hidden md:block md:my-2" />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Volume2 />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <Slider
+                max={1}
+                min={0}
+                step={0.1}
+                defaultValue={[volume]}
+                onValueCommit={(val) => {
+                  setVolume(val[0]);
+                  beep(val[0]);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       {isLoading && <Loader />}
