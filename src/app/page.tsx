@@ -26,6 +26,7 @@ import "@tensorflow/tfjs-backend-cpu";
 import { Loader } from "@/components/loader";
 import { drawOnCanvas } from "@/utils/drawOnCanvas";
 import { formatDate } from "@/utils/formatDate";
+import { run } from "node:test";
 interface Props {}
 let interval: NodeJS.Timeout;
 let stopTimeout: NodeJS.Timeout;
@@ -99,9 +100,19 @@ const Page = (props: Props) => {
       const predictions: cocoSsd.DetectedObject[] = await model.detect(
         webcamRef.current?.video
       );
-      // console.log(predictions);
       resizeCanvas(canvasRef, webcamRef);
       drawOnCanvas(mirrored, predictions, canvasRef.current?.getContext("2d"));
+      let isPerson: boolean = false;
+      if (predictions.length > 0) {
+        predictions.forEach((prediction) => {
+          isPerson = prediction.class === "person";
+        });
+
+        if (isPerson && autoRecord) {
+          startRecording(true);
+          console.log("Recording started");
+        }
+      }
     }
   }
 
@@ -112,7 +123,7 @@ const Page = (props: Props) => {
     return () => {
       clearInterval(interval);
     };
-  }, [model, mirrored]);
+  }, [model, mirrored, autoRecord]);
 
   return (
     <div className="flex h-screen">
@@ -250,6 +261,7 @@ const Page = (props: Props) => {
 };
 
 export default Page;
+
 function resizeCanvas(
   canvasRef: React.RefObject<HTMLCanvasElement>,
   webcamRef: React.RefObject<Webcam>
