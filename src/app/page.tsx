@@ -27,6 +27,7 @@ import { Loader } from "@/components/loader";
 import { drawOnCanvas } from "@/utils/drawOnCanvas";
 import { formatDate } from "@/utils/formatDate";
 import { run } from "node:test";
+import { base64toBlob } from "@/utils/base64ToBlob";
 interface Props {}
 let interval: NodeJS.Timeout;
 let stopTimeout: NodeJS.Timeout;
@@ -123,7 +124,7 @@ const Page = (props: Props) => {
     return () => {
       clearInterval(interval);
     };
-  }, [model, mirrored, autoRecord]);
+  }, [model, mirrored, runPrediction, autoRecord]);
 
   return (
     <div className="flex h-screen">
@@ -217,10 +218,22 @@ const Page = (props: Props) => {
   // handle functions
 
   function userPromptScreenshot() {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    console.log(imageSrc);
-  }
+    // take picture
+    if (!webcamRef.current) {
+      toast("Camera not found. Please refresh");
+    } else {
+      const imgSrc = webcamRef.current.getScreenshot();
+      console.log(imgSrc);
+      const blob = base64toBlob(imgSrc);
 
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${formatDate(new Date())}.png`;
+      a.click();
+    }
+    // save it to downloads
+  }
   function userPromptRecord() {
     if (!webcamRef.current) {
       toast("Camera is not found. Please refresh.");
