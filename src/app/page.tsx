@@ -63,7 +63,7 @@ const Page = (props: Props) => {
       }
     }
   }, [webcamRef]);
-
+  // init model
   useEffect(() => {
     setIsLoading(true);
     initModel();
