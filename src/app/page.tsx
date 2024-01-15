@@ -62,7 +62,7 @@ const Page = (props: Props) => {
         };
       }
     }
-  });
+  }, [webcamRef]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -221,11 +221,10 @@ const Page = (props: Props) => {
       toast("Camera is not found. Please refresh.");
     }
 
-    if (mediaRecorderRef.current?.state == "recording") {
-      mediaRecorderRef.current.requestData();
-      clearTimeout(stopTimeout);
+    if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
       toast("Recording saved to downloads");
+      clearTimeout(stopTimeout);
     } else {
       startRecording(false);
     }
@@ -239,7 +238,6 @@ const Page = (props: Props) => {
 
       stopTimeout = setTimeout(() => {
         if (mediaRecorderRef.current?.state === "recording") {
-          mediaRecorderRef.current.requestData();
           mediaRecorderRef.current.stop();
           toast("Recording saved to downloads");
         }
