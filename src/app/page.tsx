@@ -2,7 +2,7 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -25,12 +25,15 @@ import "@tensorflow/tfjs-backend-webgl";
 import "@tensorflow/tfjs-backend-cpu";
 import { Loader } from "@/components/loader";
 import { drawOnCanvas } from "@/utils/drawOnCanvas";
+import { formatDate } from "@/utils/formatDate";
 interface Props {}
 let interval: NodeJS.Timeout;
+let stopTimeout: NodeJS.Timeout;
 
 const Page = (props: Props) => {
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   const [mirrored, setMirrored] = useState<boolean>(true);
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -38,6 +41,33 @@ const Page = (props: Props) => {
   const [volume, setVolume] = useState<number>(0.7);
   const [model, setModel] = useState<cocoSsd.ObjectDetection>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (webcamRef && webcamRef.current && webcamRef.current?.video) {
+      const stream = (webcamRef.current.video as any).captureStream();
+      if (stream) {
+        mediaRecorderRef.current = new MediaRecorder(stream);
+
+        mediaRecorderRef.current.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            const recordedBlob = new Blob([e.data], { type: "video" });
+            const videoURL = URL.createObjectURL(recordedBlob);
+
+            const a = document.createElement("a");
+            a.href = videoURL;
+            a.download = `${formatDate(new Date())}.webm`;
+            a.click();
+          }
+        };
+        mediaRecorderRef.current.onstart = (e) => {
+          setIsRecording(true);
+        };
+        mediaRecorderRef.current.onstop = (e) => {
+          setIsRecording(false);
+        };
+      }
+    }
+  });
 
   useEffect(() => {
     setIsLoading(true);
@@ -181,11 +211,33 @@ const Page = (props: Props) => {
   }
 
   function userPromptRecord() {
-    // check if recording
-    // if recording stop recording
-    // else start recording
+    if (!webcamRef.current) {
+      toast("Camera is not found. Please refresh.");
+    }
+
+    if (mediaRecorderRef.current?.state == "recording") {
+      mediaRecorderRef.current.requestData();
+      clearTimeout(stopTimeout);
+      mediaRecorderRef.current.stop();
+      toast("Recording saved to downloads");
+    } else {
+      startRecording(false);
+    }
   }
 
+  function startRecording(doBeep: boolean) {
+    if (webcamRef.current && mediaRecorderRef.current?.state !== "recording") {
+      mediaRecorderRef.current?.start();
+      doBeep && beep(volume);
+
+      stopTimeout = setTimeout(() => {
+        if (mediaRecorderRef.current?.state === "recording") {
+          mediaRecorderRef.current.requestData();
+          mediaRecorderRef.current.stop();
+        }
+      }, 30000);
+    }
+  }
   function toggleAutoRecord() {
     if (autoRecord) {
       setAutoRecord(false);
