@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
-import { Camera, Cctv, FlipHorizontal, Video, Volume2 } from "lucide-react";
+import {
+  Camera,
+  Cctv,
+  FlipHorizontal,
+  SwitchCameraIcon,
+  Video,
+  Volume2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Rings } from "react-loader-spinner";
 import {
@@ -36,6 +43,19 @@ const Page = (props: Props) => {
   const [volume, setVolume] = useState<number>(0.7);
   const [model, setModel] = useState<cocoSsd.ObjectDetection>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [camera, setCamera] = useState<"user" | "environment">("user");
+
+  const videoConstraints = {
+    facingMode: camera === "user" ? "user" : { exact: "environment" },
+  };
+
+  const toggleCamera = () => {
+    if (camera === "user") {
+      setCamera("environment");
+    } else {
+      setCamera("user");
+    }
+  };
 
   useEffect(() => {
     if (webcamRef && webcamRef.current && webcamRef.current?.video) {
@@ -112,19 +132,20 @@ const Page = (props: Props) => {
   useEffect(() => {
     interval = setInterval(() => {
       runPrediction();
-    }, 1000);
+    }, 100);
     return () => {
       clearInterval(interval);
     };
-  }, [model, mirrored, webcamRef, autoRecord]);
+  }, [model, mirrored, webcamRef, autoRecord, camera]);
 
   return (
     <div className="flex-col flex md:flex-row relative h-screen">
       <div className="relative h-full w-full">
         <div className="relative h-full w-full">
           <Webcam
+            videoConstraints={videoConstraints}
             ref={webcamRef}
-            mirrored={mirrored}
+            mirrored={camera === "user" ? mirrored : !mirrored}
             className="h-full w-full object-contain p-2"
           />
           <canvas
@@ -150,6 +171,9 @@ const Page = (props: Props) => {
         </div>
         <div className="flex flex-row md:flex-col gap-2">
           <Separator className="hidden md:block md:my-2" />
+          <Button variant="outline" size="icon" onClick={toggleCamera}>
+            <SwitchCameraIcon />
+          </Button>
           <Button variant="outline" size="icon" onClick={userPromptScreenshot}>
             <Camera />
           </Button>
