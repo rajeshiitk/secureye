@@ -139,9 +139,9 @@ const Page = (props: Props) => {
   }, [model, mirrored, webcamRef, autoRecord, camera]);
 
   return (
-    <div className="flex-col flex md:flex-row relative h-screen">
-      <div className="relative h-full w-full">
-        <div className="relative h-full w-full">
+    <div className="flex-col flex md:flex-row relative h-[calc(100svh)]">
+      <div className="relative h-[calc(100svh)] w-full">
+        <div className="relative h-[calc(100svh)] w-full">
           <Webcam
             videoConstraints={videoConstraints}
             ref={webcamRef}
