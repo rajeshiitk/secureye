@@ -2,7 +2,7 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -46,14 +46,40 @@ const Page = (props: Props) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [camera, setCamera] = useState<"user" | "environment">("user");
   const [Open, setOpen] = useState<boolean>(false);
+  const [isPersonDetected, setIsPersonDetected] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  let noPersonTimeout: NodeJS.Timeout;
 
   const videoConstraints = {
     facingMode: camera === "user" ? "user" : { exact: "environment" },
   };
-  const closeGate = () => {
-    const res = Axios.get("http://192.168.255.184/close");
-    console.log(res);
+
+  const openGate = async () => {
+    try {
+      await Axios.get("http://192.168.255.184/open");
+      setGateOpen(true);
+    } catch (error) {
+      console.error("Error opening gate:", error);
+    }
   };
+
+  const closeGate = async () => {
+    try {
+      await Axios.get("http://192.168.255.184/close");
+      setGateOpen(false);
+    } catch (error) {
+      console.error("Error closing gate:", error);
+    }
+  };
+
+  useEffect(() => {
+    // If 'Open' state is true, open the gate
+    if (isPersonDetected) {
+      openGate();
+    } else {
+      closeGate();
+    }
+  }, [isPersonDetected]);
 
   useEffect(() => {
     if (Open) {
@@ -141,8 +167,18 @@ const Page = (props: Props) => {
         });
 
         if (isPerson) {
-          setOpen(true);
+          setIsPersonDetected(true);
+          if (!gateOpen) {
+            openGate();
+          }
+          // Restart the timeout if a person is detected
+          clearTimeout(noPersonTimeout);
+          noPersonTimeout = setTimeout(closeGate, 2000);
         }
+
+        // if (isPerson) {
+        //   setOpen(true);
+        // }
         if (isPerson && autoRecord) {
           startRecording(true);
         }
@@ -166,7 +202,7 @@ const Page = (props: Props) => {
           <Webcam
             videoConstraints={videoConstraints}
             ref={webcamRef}
-            mirrored={camera === "user" ? mirrored : !mirrored}
+            mirrored={mirrored}
             className="h-full w-full object-contain p-2"
           />
           <canvas
