@@ -18,6 +18,7 @@
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs-backend-cpu": "^4.16.0",
     "@tensorflow/tfjs-backend-webgl": "^4.16.0",
+    "axios": "^1.6.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.309.0",

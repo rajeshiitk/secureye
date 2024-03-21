@@ -2,7 +2,7 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -28,6 +28,7 @@ import { Loader } from "@/components/loader";
 import { drawOnCanvas } from "@/utils/drawOnCanvas";
 import { formatDate } from "@/utils/formatDate";
 import { base64toBlob } from "@/utils/base64ToBlob";
+import Axios from "axios";
 interface Props {}
 let interval: NodeJS.Timeout;
 let stopTimeout: NodeJS.Timeout;
@@ -44,10 +45,25 @@ const Page = (props: Props) => {
   const [model, setModel] = useState<cocoSsd.ObjectDetection>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [camera, setCamera] = useState<"user" | "environment">("user");
+  const [Open, setOpen] = useState<boolean>(false);
 
   const videoConstraints = {
     facingMode: camera === "user" ? "user" : { exact: "environment" },
   };
+  const closeGate = () => {
+    const res = Axios.get("http://192.168.255.184/close");
+    console.log(res);
+  };
+
+  useEffect(() => {
+    if (Open) {
+      const res = Axios.get("http://192.168.255.184/open");
+      console.log(res);
+      setTimeout(() => {
+        closeGate();
+      }, 3000);
+    }
+  }, [Open]);
 
   const toggleCamera = () => {
     if (camera === "user") {
@@ -120,8 +136,13 @@ const Page = (props: Props) => {
       if (predictions.length > 0) {
         predictions.forEach((prediction) => {
           isPerson = prediction.class === "person";
+          console.log("prediction class :" + prediction.class);
+          console.log(isPerson);
         });
 
+        if (isPerson) {
+          setOpen(true);
+        }
         if (isPerson && autoRecord) {
           startRecording(true);
         }
@@ -132,7 +153,7 @@ const Page = (props: Props) => {
   useEffect(() => {
     interval = setInterval(() => {
       runPrediction();
-    }, 100);
+    }, 500);
     return () => {
       clearInterval(interval);
     };
