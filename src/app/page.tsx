@@ -84,7 +84,7 @@ const Page = (props: Props) => {
 
   useEffect(() => {
     if (Open && enableNodeMCU) {
-      const res = Axios.get("http://192.168.255.184/open");
+      const res = Axios.get(`${process.env.NEXT_PUBLIC_NODEMCU_URL}/close`);
       console.log(res);
       setTimeout(() => {
         closeGate();
