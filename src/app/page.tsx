@@ -48,6 +48,7 @@ const Page = (props: Props) => {
   const [Open, setOpen] = useState<boolean>(false);
   const [isPersonDetected, setIsPersonDetected] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  const [enableNodeMCU, setEnableNodeMCU] = useState(true);
   let noPersonTimeout: NodeJS.Timeout;
 
   const videoConstraints = {
@@ -82,7 +83,7 @@ const Page = (props: Props) => {
   }, [isPersonDetected]);
 
   useEffect(() => {
-    if (Open) {
+    if (Open && enableNodeMCU) {
       const res = Axios.get("http://192.168.255.184/open");
       console.log(res);
       setTimeout(() => {
@@ -168,7 +169,7 @@ const Page = (props: Props) => {
 
         if (isPerson) {
           setIsPersonDetected(true);
-          if (!gateOpen) {
+          if (!gateOpen && enableNodeMCU) {
             openGate();
           }
           // Restart the timeout if a person is detected
