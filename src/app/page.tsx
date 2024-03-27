@@ -56,7 +56,7 @@ const Page = (props: Props) => {
 
   const openGate = async () => {
     try {
-      await Axios.get("http://192.168.255.184/open");
+      await Axios.get(`${process.env.NEXT_PUBLIC_NODEMCU_URL}/open`);
       setGateOpen(true);
     } catch (error) {
       console.error("Error opening gate:", error);
@@ -65,7 +65,7 @@ const Page = (props: Props) => {
 
   const closeGate = async () => {
     try {
-      await Axios.get("http://192.168.255.184/close");
+      await Axios.get(`${process.env.NEXT_PUBLIC_NODEMCU_URL}/close`);
       setGateOpen(false);
     } catch (error) {
       console.error("Error closing gate:", error);
