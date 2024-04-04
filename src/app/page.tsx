@@ -2,7 +2,7 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -29,6 +29,7 @@ import { drawOnCanvas } from "@/utils/drawOnCanvas";
 import { formatDate } from "@/utils/formatDate";
 import { base64toBlob } from "@/utils/base64ToBlob";
 import Axios from "axios";
+import { useSocket } from "@/provider/socket-provider";
 interface Props {}
 let interval: NodeJS.Timeout;
 let stopTimeout: NodeJS.Timeout;
@@ -48,7 +49,7 @@ const Page = (props: Props) => {
   const [Open, setOpen] = useState<boolean>(false);
   const [isPersonDetected, setIsPersonDetected] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
-  const [enableNodeMCU, setEnableNodeMCU] = useState(true);
+  const [enableNodeMCU, setEnableNodeMCU] = useState(false);
   let noPersonTimeout: NodeJS.Timeout;
 
   const videoConstraints = {
@@ -73,12 +74,43 @@ const Page = (props: Props) => {
     }
   };
 
+  const { socket } = useSocket();
+
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlay = () => {
+    if (socket) {
+      socket.emit("message", "Hello from server");
+    }
+    setIsPlaying(true);
+  };
+
+  const handlePause = () => {
+    setIsPlaying(false);
+  };
+
+  useEffect(() => {
+    if (isPlaying && socket) {
+      if (webcamRef.current) {
+        const captureFrame = () => {
+          const imageSrc = webcamRef.current?.getScreenshot();
+          socket.emit("video-frame", imageSrc); // Emit frame data
+        };
+
+        const intervalId = setInterval(captureFrame, 100); // Capture every 100ms (adjust as needed)
+        return () => clearInterval(intervalId);
+      }
+    }
+  }, [isPlaying, socket]);
+
   useEffect(() => {
     // If 'Open' state is true, open the gate
-    if (isPersonDetected) {
-      openGate();
-    } else {
-      closeGate();
+    if (enableNodeMCU) {
+      if (isPersonDetected) {
+        openGate();
+      } else {
+        closeGate();
+      }
     }
   }, [isPersonDetected]);
 
@@ -163,8 +195,8 @@ const Page = (props: Props) => {
       if (predictions.length > 0) {
         predictions.forEach((prediction) => {
           isPerson = prediction.class === "person";
-          console.log("prediction class :" + prediction.class);
-          console.log(isPerson);
+          // console.log("prediction class :" + prediction.class);
+          // console.log(isPerson);
         });
 
         if (isPerson) {
@@ -276,6 +308,14 @@ const Page = (props: Props) => {
         </div>
       </div>
       {isLoading && <Loader />}
+      <div>
+        <button onClick={handlePlay} disabled={isPlaying}>
+          Start Stream
+        </button>
+        <button onClick={handlePause} disabled={!isPlaying}>
+          Pause Stream
+        </button>
+      </div>
     </div>
   );
 
