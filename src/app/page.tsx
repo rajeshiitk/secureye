@@ -89,7 +89,7 @@ const Page = (props: Props) => {
       });
       console.log("socket : " + socket.id + " " + socket.connected);
     };
-    const intervalId = setInterval(captureFrame, 2000);
+    const intervalId = setInterval(captureFrame, 200);
     return () => clearInterval(intervalId);
   };
 
