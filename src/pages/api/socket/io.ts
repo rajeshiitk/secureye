@@ -39,6 +39,16 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
         console.log("Received message:", msg);
         io.emit("message", msg);
       });
+      socket.on("video-frame", (frame) => {
+        console.log("Received frame:", frame);
+        io.emit("video-frame", frame);
+      });
+      socket.on("disconnect", () => {
+        console.log("Socket disconnected:", socket.id);
+      });
+      socket.on("error", (error) => {
+        console.log("Socket error:", error);
+      });
     });
   }
   console.log("Socket server initialized");

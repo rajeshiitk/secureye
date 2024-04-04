@@ -18,15 +18,22 @@ const VideoStream = () => {
       });
 
       // Handle cleanup on unmount
-      return () => socket.socket.disconnect();
+      return () => socket.disconnect();
     }
   }, [socket]);
 
   const sendMessage = () => {
     console.log(socket);
+    if (!socket || !socket.connected) {
+      console.log("socket not connected");
+      return;
+    }
     // if (!socket) return; // Handle empty message or missing socket
     socket.emit("message", `${message} from ${socket.id}`);
     setMessage("");
+    socket.on("error", (error: any) => {
+      console.log("error : " + error);
+    });
     console.log("message sent");
   };
 

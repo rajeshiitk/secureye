@@ -83,8 +83,13 @@ const Page = (props: Props) => {
     const captureFrame = () => {
       const imageSrc = webcamRef.current?.getScreenshot();
       socket.emit("video-frame", imageSrc);
+      console.log("frame captured");
+      socket.on("error", (error: any) => {
+        console.log("error : " + error);
+      });
+      console.log("socket : " + socket.id + " " + socket.connected);
     };
-    const intervalId = setInterval(captureFrame, 100);
+    const intervalId = setInterval(captureFrame, 2000);
     return () => clearInterval(intervalId);
   };
 
@@ -312,12 +317,8 @@ const Page = (props: Props) => {
       </div>
       {isLoading && <Loader />}
       <div>
-        <button onClick={handlePlay} disabled={isPlaying}>
-          Start Stream
-        </button>
-        <button onClick={handlePause} disabled={!isPlaying}>
-          Pause Stream
-        </button>
+        <button onClick={handlePlay}>Start Stream</button>
+        <button onClick={handlePause}>Pause Stream</button>
       </div>
     </div>
   );
