@@ -79,10 +79,13 @@ const Page = (props: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const handlePlay = () => {
-    if (socket) {
-      socket.emit("message", "Hello from server");
-    }
     setIsPlaying(true);
+    const captureFrame = () => {
+      const imageSrc = webcamRef.current?.getScreenshot();
+      socket.emit("video-frame", imageSrc);
+    };
+    const intervalId = setInterval(captureFrame, 100);
+    return () => clearInterval(intervalId);
   };
 
   const handlePause = () => {

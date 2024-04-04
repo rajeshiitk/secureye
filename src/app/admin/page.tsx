@@ -11,7 +11,7 @@ const VideoStream = () => {
 
   useEffect(() => {
     if (socket) {
-      socket.broadcast.on("message", (data: any) => {
+      socket.on("message", (data: any) => {
         // setFrameData(data);
         setMessage(data);
         console.log("data : " + data);
