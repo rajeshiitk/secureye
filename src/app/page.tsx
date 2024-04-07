@@ -2,7 +2,7 @@
 import { ModeToggle } from "@/components/themeToggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -30,6 +30,7 @@ import { formatDate } from "@/utils/formatDate";
 import { base64toBlob } from "@/utils/base64ToBlob";
 import Axios from "axios";
 import { useSocket } from "@/provider/socket-provider";
+import peer from "@/utils/peer";
 interface Props {}
 let interval: NodeJS.Timeout;
 let stopTimeout: NodeJS.Timeout;
@@ -50,6 +51,9 @@ const Page = (props: Props) => {
   const [isPersonDetected, setIsPersonDetected] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [enableNodeMCU, setEnableNodeMCU] = useState(false);
+  const [myStream, setMyStream] = useState<MediaStream | null>(null);
+  const [remoteSocketId, setRemoteSocketId] = useState<string | null>();
+  const [room, setRoom] = useState<string>("1");
   let noPersonTimeout: NodeJS.Timeout;
 
   const videoConstraints = {
@@ -76,40 +80,114 @@ const Page = (props: Props) => {
 
   const { socket } = useSocket();
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const handleUserJoined = useCallback(({ id }: { id: string }) => {
+    console.log(`id ${id} joined room`);
+    setRemoteSocketId(id);
+  }, []);
 
-  const handlePlay = () => {
-    setIsPlaying(true);
-    const captureFrame = () => {
-      const imageSrc = webcamRef.current?.getScreenshot();
-      socket.emit("video-frame", imageSrc);
-      console.log("frame captured");
-      socket.on("error", (error: any) => {
-        console.log("error : " + error);
-      });
-      console.log("socket : " + socket.id + " " + socket.connected);
-    };
-    const intervalId = setInterval(captureFrame, 200);
-    return () => clearInterval(intervalId);
-  };
+  const handleCallUser = useCallback(async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+    const offer = await peer.getOffer();
+    socket.emit("user:call", { to: remoteSocketId, offer });
+    setMyStream(stream);
+    console.log("Call User");
+    console.log("Offer", offer);
+  }, [remoteSocketId, socket]);
 
-  const handlePause = () => {
-    setIsPlaying(false);
-  };
-
-  useEffect(() => {
-    if (isPlaying && socket) {
-      if (webcamRef.current) {
-        const captureFrame = () => {
-          const imageSrc = webcamRef.current?.getScreenshot();
-          socket.emit("video-frame", imageSrc); // Emit frame data
-        };
-
-        const intervalId = setInterval(captureFrame, 100); // Capture every 100ms (adjust as needed)
-        return () => clearInterval(intervalId);
+  const sendStreams = useCallback(() => {
+    console.log("Sending Streams");
+    if (myStream) {
+      for (const track of myStream.getTracks()) {
+        peer.peer.addTrack(track, myStream);
       }
     }
-  }, [isPlaying, socket]);
+  }, [myStream]);
+
+  const handleCallAccepted = useCallback(
+    ({ from, ans }) => {
+      peer.setLocalDescription(ans);
+      console.log("Call Accepted!");
+      sendStreams();
+    },
+    [sendStreams]
+  );
+
+  const handleJoinRoom = () => {
+    if (socket) {
+      console.log("Room Joined");
+
+      socket.emit("room:join", { room });
+    }
+  };
+
+  const handleNegoNeeded = useCallback(async () => {
+    const offer = await peer.getOffer();
+    socket.emit("peer:nego:needed", { offer, to: remoteSocketId });
+  }, [remoteSocketId, socket]);
+
+  useEffect(() => {
+    peer.peer.addEventListener("negotiationneeded", handleNegoNeeded);
+    return () => {
+      peer.peer.removeEventListener("negotiationneeded", handleNegoNeeded);
+    };
+  }, [handleNegoNeeded]);
+
+  const handleNegoNeedIncomming = useCallback(
+    async ({ from, offer }) => {
+      const ans = await peer.getAnswer(offer);
+      socket.emit("peer:nego:done", { to: from, ans });
+    },
+    [socket]
+  );
+
+  const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+    await peer.setLocalDescription(ans);
+  }, []);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("user:joined", handleUserJoined);
+      socket.on("call:accepted", handleCallAccepted);
+      socket.on("peer:nego:needed", handleNegoNeedIncomming);
+      socket.on("peer:nego:final", handleNegoNeedFinal);
+
+      return () => {
+        socket.off("user:joined", handleUserJoined);
+        socket.off("call:accepted", handleCallAccepted);
+        socket.off("peer:nego:needed", handleNegoNeedIncomming);
+        socket.off("peer:nego:final", handleNegoNeedFinal);
+      };
+    }
+  }, [
+    socket,
+    handleCallAccepted,
+    handleUserJoined,
+    handleNegoNeedIncomming,
+    handleNegoNeedFinal,
+  ]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("message", (data: any) => {
+        console.log("Received message:", data);
+      });
+      socket.on("stream", (data: any) => {
+        // Handle video stream data
+        console.log("video-stream data : " + data);
+      });
+      return () => {
+        socket.off("message", () => {
+          console.log("message off");
+        });
+        socket.off("stream", () => {
+          console.log("stream off");
+        });
+      };
+    }
+  }, [socket]);
 
   useEffect(() => {
     // If 'Open' state is true, open the gate
@@ -229,7 +307,7 @@ const Page = (props: Props) => {
 
   useEffect(() => {
     interval = setInterval(() => {
-      runPrediction();
+      // runPrediction();
     }, 500);
     return () => {
       clearInterval(interval);
@@ -317,8 +395,11 @@ const Page = (props: Props) => {
       </div>
       {isLoading && <Loader />}
       <div>
-        <button onClick={handlePlay}>Start Stream</button>
-        <button onClick={handlePause}>Pause Stream</button>
+        <button onClick={handleCallUser}>Send Stream</button>
+        <button onClick={handleJoinRoom}>Join Room</button>
+        {remoteSocketId && <p>Remote Socket Id: {remoteSocketId}</p>}
+        {room && <p>Room: {room}</p>}
+        {socket ? <p>Connected to server</p> : <p>Not connected to server</p>}
       </div>
     </div>
   );

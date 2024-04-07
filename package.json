@@ -28,6 +28,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-loader-spinner": "^6.1.6",
+    "react-player": "^2.15.1",
     "react-webcam": "^7.2.0",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
