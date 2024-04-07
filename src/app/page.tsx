@@ -107,7 +107,7 @@ const Page = (props: Props) => {
   }, [myStream]);
 
   const handleCallAccepted = useCallback(
-    ({ from, ans }) => {
+    ({ ans }: { ans: any }) => {
       peer.setLocalDescription(ans);
       console.log("Call Accepted!");
       sendStreams();
@@ -123,6 +123,10 @@ const Page = (props: Props) => {
     }
   };
 
+  useEffect(() => {
+    handleJoinRoom();
+  }, []);
+
   const handleNegoNeeded = useCallback(async () => {
     const offer = await peer.getOffer();
     socket.emit("peer:nego:needed", { offer, to: remoteSocketId });
@@ -136,14 +140,14 @@ const Page = (props: Props) => {
   }, [handleNegoNeeded]);
 
   const handleNegoNeedIncomming = useCallback(
-    async ({ from, offer }) => {
+    async ({ from, offer }: { from: string; offer: any }) => {
       const ans = await peer.getAnswer(offer);
       socket.emit("peer:nego:done", { to: from, ans });
     },
     [socket]
   );
 
-  const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+  const handleNegoNeedFinal = useCallback(async ({ ans }: { ans: any }) => {
     await peer.setLocalDescription(ans);
   }, []);
 

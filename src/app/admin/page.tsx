@@ -7,11 +7,9 @@ import ReactPlayer from "react-player";
 
 const VideoStream = () => {
   const { isConnected, socket } = useSocket(); // Access socket from context
-  const [message, setMessage] = useState("");
   const [remoteSocketId, setRemoteSocketId] = useState("");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [room, setRoom] = useState("1");
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   const handleJoinRoom = () => {
     if (socket) {
@@ -49,23 +47,15 @@ const VideoStream = () => {
   }, [handleNegoNeeded]);
 
   const handleNegoNeedIncomming = useCallback(
-    async ({ from, offer }) => {
+    async ({ from, offer }: { from: string; offer: any }) => {
       const ans = await peer.getAnswer(offer);
       socket.emit("peer:nego:done", { to: from, ans });
     },
     [socket]
   );
 
-  const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+  const handleNegoNeedFinal = useCallback(async ({ ans }: { ans: any }) => {
     await peer.setLocalDescription(ans);
-  }, []);
-
-  useEffect(() => {
-    peer.peer.addEventListener("track", async (ev) => {
-      const remoteStream = ev.streams;
-      console.log("GOT TRACKS!!", remoteStream);
-      setRemoteStream(remoteStream[0]);
-    });
   }, []);
 
   useEffect(() => {
@@ -92,47 +82,19 @@ const VideoStream = () => {
 
   useEffect(() => {
     if (socket) {
-      socket.on("message", (data: any) => {
-        setMessage(data);
-        console.log("data : " + data);
-      });
-      socket.on("stream", (data: any) => {
-        // Handle video stream data
-        console.log("video-stream data : " + data);
-      });
-
       // Handle cleanup on unmount
       return () => socket.disconnect();
     }
   }, [socket]);
-
-  const sendMessage = () => {
-    console.log(socket);
-    if (!socket || !socket.connected) {
-      console.log("socket not connected");
-      return;
-    }
-    // if (!socket) return; // Handle empty message or missing socket
-    socket.emit("message", `${message} from ${socket.id}`);
-    setMessage("");
-    socket.on("error", (error: any) => {
-      console.log("error : " + error);
-    });
-    console.log("message sent");
-  };
 
   // Function to display received frame (replace with your custom logic for handling frame data)
 
   return (
     <div>
       <div>
-        <button onClick={sendMessage}>send message</button>
         <button onClick={handleJoinRoom}>Join Room</button>
         <button onClick={handleNegoNeeded}>Call</button>
-        <div>
-          message:
-          <input value={message} onChange={(e) => setMessage(e.target.value)} />
-        </div>
+
         {isConnected ? (
           <p>Connected to server</p>
         ) : (
