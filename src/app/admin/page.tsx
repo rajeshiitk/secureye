@@ -1,9 +1,22 @@
 "use client";
 import { useSocket } from "@/provider/socket-provider";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCallback } from "react";
 import peer from "@/utils/peer";
 import ReactPlayer from "react-player";
+import {
+  CardTitle,
+  CardDescription,
+  CardHeader,
+  CardContent,
+  Card,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import axios from "axios";
+import { SunIcon, ThermometerIcon } from "lucide-react";
+
+// let base_url = "http://192.168.234.126:5000";
 
 const VideoStream = () => {
   const { isConnected, socket } = useSocket(); // Access socket from context
@@ -11,7 +24,33 @@ const VideoStream = () => {
   const [remoteSocketId, setRemoteSocketId] = useState("");
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [room, setRoom] = useState("1");
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+
+  const [temperature, setTemperature] = useState(72);
+  const [humidity, setHumidity] = useState(50);
+  const [light, setLight] = useState(false);
+  const [ac, setAc] = useState(false);
+  const [fanSpeed, setFanSpeed] = useState(0);
+
+  const getSensorData = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/api/getsensordata`
+      );
+      setTemperature(response.data.temperature);
+      setHumidity(response.data.humidity);
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  // axios api to get temperature and humidity
+  useEffect(() => {
+    // interval to get temperature and humidity every 5 seconds
+    const interval = setInterval(() => {
+      getSensorData();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleJoinRoom = () => {
     if (socket) {
@@ -49,14 +88,14 @@ const VideoStream = () => {
   }, [handleNegoNeeded]);
 
   const handleNegoNeedIncomming = useCallback(
-    async ({ from, offer }) => {
+    async ({ from, offer }: { from: any; offer: any }) => {
       const ans = await peer.getAnswer(offer);
       socket.emit("peer:nego:done", { to: from, ans });
     },
     [socket]
   );
 
-  const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+  const handleNegoNeedFinal = useCallback(async ({ ans }: { ans: any }) => {
     await peer.setLocalDescription(ans);
   }, []);
 
@@ -121,7 +160,53 @@ const VideoStream = () => {
     console.log("message sent");
   };
 
-  // Function to display received frame (replace with your custom logic for handling frame data)
+  const handleToggle = (checked: boolean) => {
+    setLight(checked);
+
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/light?status=${
+          checked ? "on" : "off"
+        }`
+      )
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+    console.log(checked);
+  };
+
+  const handleToggleAc = (checked: boolean) => {
+    setAc(checked);
+
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/ac?status=${
+          checked ? "on" : "off"
+        }`
+      )
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  const handleFanSpeed = (speed: number) => {
+    setFanSpeed(speed);
+    axios
+      .get(`${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/fan?speed=${speed}`)
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
 
   return (
     <div>
@@ -139,18 +224,109 @@ const VideoStream = () => {
           <p>Not connected to server</p>
         )}
         <div>
-          {remoteStream && (
-            <>
-              <h1>Remote Stream</h1>
-              <ReactPlayer
-                playing
-                muted
-                height="100px"
-                width="200px"
-                url={remoteStream}
-              />
-            </>
-          )}
+          {" "}
+          <div className="grid w-full  h-screen gap-4 md:gap-8 lg:grid-cols-[300px_1fr]">
+            <div className="grid gap-4 md:grid-rows-2">
+              <div className="grid gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Living Room</CardTitle>
+                    <CardDescription>2 devices</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <SunIcon className="w-6 h-6" />
+                        <span className="font-medium">Light</span>
+                        <Switch
+                          className="ml-auto w-10 h-6"
+                          checked={light}
+                          onCheckedChange={(checked) =>
+                            handleToggle(checked as boolean)
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ThermometerIcon className="w-6 h-6" />
+                        <span className="font-medium">AC</span>
+                        <Switch
+                          className="ml-auto w-10 h-6"
+                          checked={ac}
+                          onCheckedChange={(checked: boolean) =>
+                            handleToggleAc(checked as boolean)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Fan Speed Control</CardTitle>
+                    <CardDescription>Adjust the Slider</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-2">
+                      <div className="text-4xl font-semibold">72°</div>
+                      <Slider
+                        max={100}
+                        min={0}
+                        step={5}
+                        defaultValue={[fanSpeed]}
+                        onValueCommit={(val) => {
+                          setFanSpeed(val[0]);
+                          handleFanSpeed(val[0]);
+                        }}
+                      />{" "}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Temperature</CardTitle>
+                    <CardDescription>Adjust the thermostat</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-2">
+                      <div className="text-2xl font-semibold">
+                        Temperature: {temperature}
+                        <Slider value={[temperature]} className="w-full" />
+                      </div>
+                      <div className="text-2xl font-semibold">
+                        Humidity: {humidity}
+                        <Slider value={[humidity]} className="w-full" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="grid gap-4"></div>
+            </div>
+            <div className="flex flex-col gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Live Video</CardTitle>
+                  <CardDescription>Front Door</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video rounded-xl overflow-hidden">
+                    {remoteStream && (
+                      <>
+                        <h1>Remote Stream</h1>
+                        <ReactPlayer
+                          playing
+                          muted
+                          height={"100%"}
+                          width={"100%"}
+                          url={remoteStream}
+                        />
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

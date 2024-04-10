@@ -50,7 +50,7 @@ const Page = (props: Props) => {
   const [Open, setOpen] = useState<boolean>(false);
   const [isPersonDetected, setIsPersonDetected] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
-  const [enableNodeMCU, setEnableNodeMCU] = useState(false);
+  const [enableNodeMCU, setEnableNodeMCU] = useState(true);
   const [myStream, setMyStream] = useState<MediaStream | null>(null);
   const [remoteSocketId, setRemoteSocketId] = useState<string | null>();
   const [room, setRoom] = useState<string>("1");
@@ -295,9 +295,9 @@ const Page = (props: Props) => {
           noPersonTimeout = setTimeout(closeGate, 2000);
         }
 
-        // if (isPerson) {
-        //   setOpen(true);
-        // }
+        if (isPerson) {
+          setOpen(true);
+        }
         if (isPerson && autoRecord) {
           startRecording(true);
         }
@@ -307,7 +307,7 @@ const Page = (props: Props) => {
 
   useEffect(() => {
     interval = setInterval(() => {
-      // runPrediction();
+      runPrediction();
     }, 500);
     return () => {
       clearInterval(interval);
