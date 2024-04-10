@@ -31,6 +31,7 @@ import { base64toBlob } from "@/utils/base64ToBlob";
 import Axios from "axios";
 import { useSocket } from "@/provider/socket-provider";
 import peer from "@/utils/peer";
+import { MainSettingDrawerDialog } from "@/components/main-setting";
 interface Props {}
 let interval: NodeJS.Timeout;
 let stopTimeout: NodeJS.Timeout;
@@ -78,7 +79,7 @@ const Page = (props: Props) => {
     }
   };
 
-  const { socket } = useSocket();
+  const { socket, isConnected } = useSocket();
 
   const handleUserJoined = useCallback(({ id }: { id: string }) => {
     console.log(`id ${id} joined room`);
@@ -107,7 +108,7 @@ const Page = (props: Props) => {
   }, [myStream]);
 
   const handleCallAccepted = useCallback(
-    ({ from, ans }) => {
+    ({ ans }: { ans: any }) => {
       peer.setLocalDescription(ans);
       console.log("Call Accepted!");
       sendStreams();
@@ -136,14 +137,14 @@ const Page = (props: Props) => {
   }, [handleNegoNeeded]);
 
   const handleNegoNeedIncomming = useCallback(
-    async ({ from, offer }) => {
+    async ({ from, offer }: { from: string; offer: any }) => {
       const ans = await peer.getAnswer(offer);
       socket.emit("peer:nego:done", { to: from, ans });
     },
     [socket]
   );
 
-  const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+  const handleNegoNeedFinal = useCallback(async ({ ans }: { ans: any }) => {
     await peer.setLocalDescription(ans);
   }, []);
 
@@ -315,93 +316,114 @@ const Page = (props: Props) => {
   }, [model, mirrored, webcamRef, autoRecord, camera]);
 
   return (
-    <div className="flex-col flex md:flex-row relative h-[calc(100svh)]">
-      <div className="relative h-[calc(100svh)] w-full">
-        <div className="relative h-[calc(100svh)] w-full">
-          <Webcam
-            videoConstraints={videoConstraints}
-            ref={webcamRef}
-            mirrored={mirrored}
-            className="h-full w-full object-contain p-2"
-          />
-          <canvas
-            ref={canvasRef}
-            className="absolute top-0 left-0 h-full w-full object-contain p-2"
-          ></canvas>
-        </div>
-      </div>
-      {/* right side bar */}
-      <div className="border-primary/5  fixed bottom-0 w-full md:w-fit md:relative border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
-        <div className="flex flex-row md:flex-col gap-2">
-          <ModeToggle />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              setMirrored((prev) => !prev);
-            }}
-          >
-            <FlipHorizontal />
-          </Button>
-          <Separator className="hidden md:block md:my-2" />
-        </div>
-        <div className="flex flex-row md:flex-col gap-2">
-          <Separator className="hidden md:block md:my-2" />
-          <Button variant="outline" size="icon" onClick={toggleCamera}>
-            <SwitchCameraIcon />
-          </Button>
-          <Button variant="outline" size="icon" onClick={userPromptScreenshot}>
-            <Camera />
-          </Button>
-          <Button
-            variant={isRecording ? "destructive" : "outline"}
-            size="icon"
-            onClick={userPromptRecord}
-          >
-            <Video />
-          </Button>
-          <Button
-            variant={autoRecord ? "destructive" : "outline"}
-            size="icon"
-            onClick={toggleAutoRecord}
-          >
-            {autoRecord ? <Rings color="white" height={45} /> : <Cctv />}
-          </Button>
-          <Separator className="hidden md:block md:my-2" />
-        </div>
+    <>
+      <MainSettingDrawerDialog
+        sendStream={handleCallUser}
+        enableNodeMCU={enableNodeMCU}
+        setEnableNodeMCU={setEnableNodeMCU}
+      />
 
-        <div className="flex flex-row md:flex-col gap-2">
-          <Separator className="hidden md:block md:my-2" />
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Volume2 />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <Slider
-                max={1}
-                min={0}
-                step={0.1}
-                defaultValue={[volume]}
-                onValueCommit={(val) => {
-                  setVolume(val[0]);
-                  beep(val[0]);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+      <div className="fixed z-10 left-20 top-1">
+        {remoteSocketId && <p>Admin Socket: {remoteSocketId}</p>}
+      </div>
+      <div className="fixed right-1 top-1">
+        {isConnected ? (
+          <Rings height={50} color="green" />
+        ) : (
+          <Rings height={50} color="red" />
+        )}
+      </div>
+      <div className="flex-col flex md:flex-row relative h-[calc(100svh)]">
+        <div className="relative h-[calc(100svh)] w-full">
+          <div className="relative h-[calc(100svh)] w-full">
+            <Webcam
+              videoConstraints={videoConstraints}
+              ref={webcamRef}
+              mirrored={mirrored}
+              className="h-full w-full object-contain p-2"
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 h-full w-full object-contain p-2"
+            ></canvas>
+          </div>
         </div>
+        {/* right side bar */}
+        <div className="border-primary/5  fixed bottom-0 w-full md:w-fit md:relative border-2 md:max-w-xs flex flex-row  md:flex-col gap-2 justify-between shadow-md rounded-md p-4">
+          <div className="flex flex-row md:flex-col gap-2">
+            <ModeToggle />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setMirrored((prev) => !prev);
+              }}
+            >
+              <FlipHorizontal />
+            </Button>
+            <Separator className="hidden md:block md:my-2" />
+          </div>
+          <div className="flex flex-row md:flex-col gap-2">
+            <Separator className="hidden md:block md:my-2" />
+            <Button variant="outline" size="icon" onClick={toggleCamera}>
+              <SwitchCameraIcon />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={userPromptScreenshot}
+            >
+              <Camera />
+            </Button>
+            <Button
+              variant={isRecording ? "destructive" : "outline"}
+              size="icon"
+              onClick={userPromptRecord}
+            >
+              <Video />
+            </Button>
+            <Button
+              variant={autoRecord ? "destructive" : "outline"}
+              size="icon"
+              onClick={toggleAutoRecord}
+            >
+              {autoRecord ? <Rings color="white" height={45} /> : <Cctv />}
+            </Button>
+            <Separator className="hidden md:block md:my-2" />
+          </div>
+
+          <div className="flex flex-row md:flex-col gap-2">
+            <Separator className="hidden md:block md:my-2" />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Volume2 />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <Slider
+                  max={1}
+                  min={0}
+                  step={0.1}
+                  defaultValue={[volume]}
+                  onValueCommit={(val) => {
+                    setVolume(val[0]);
+                    beep(val[0]);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        {isLoading && <Loader />}
+        {/* <div>
+          <button onClick={handleCallUser}>Send Stream</button>
+          <button onClick={handleJoinRoom}>Join Room</button>
+          {room && <p>Room: {room}</p>}
+          {socket ? <p>Connected to server</p> : <p>Not connected to server</p>}
+        </div> */}
       </div>
-      {isLoading && <Loader />}
-      <div>
-        <button onClick={handleCallUser}>Send Stream</button>
-        <button onClick={handleJoinRoom}>Join Room</button>
-        {remoteSocketId && <p>Remote Socket Id: {remoteSocketId}</p>}
-        {room && <p>Room: {room}</p>}
-        {socket ? <p>Connected to server</p> : <p>Not connected to server</p>}
-      </div>
-    </div>
+    </>
   );
 
   // handle function

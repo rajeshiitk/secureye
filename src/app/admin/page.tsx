@@ -227,8 +227,8 @@ const VideoStream = () => {
         </div>
         <div>
           {" "}
-          <div className="grid w-full mt-16 px-2 m-auto h-screen gap-4 md:gap-8 lg:grid-cols-[300px_1fr]">
-            <div className="grid gap-4 md:grid-rows-2">
+          <div className="grid w-full pt-16 px-2 m-auto h-[calc(100svh)] gap-4 md:gap-8 lg:grid-cols-[300px_1fr]">
+            <div className="grid gap-4 ">
               <div className="grid gap-4">
                 <Card>
                   <CardHeader>
@@ -269,7 +269,7 @@ const VideoStream = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-2">
-                      <div className="text-4xl font-semibold">72°</div>
+                      <div className="text-4xl font-semibold">{fanSpeed}</div>
                       <Slider
                         max={100}
                         min={0}
