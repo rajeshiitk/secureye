@@ -15,6 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import axios from "axios";
 import { SunIcon, ThermometerIcon } from "lucide-react";
+import { AdminSettingDrawerDialog } from "@/components/admin-setting";
+import { Rings } from "react-loader-spinner";
 
 // let base_url = "http://192.168.234.126:5000";
 
@@ -152,7 +154,7 @@ const VideoStream = () => {
       return;
     }
     // if (!socket) return; // Handle empty message or missing socket
-    socket.emit("message", `${message} from ${socket.id}`);
+    socket.emit("message", `Test Signal from Admin! ${socket.id}`);
     setMessage("");
     socket.on("error", (error: any) => {
       console.log("error : " + error);
@@ -210,22 +212,22 @@ const VideoStream = () => {
 
   return (
     <div>
+      <AdminSettingDrawerDialog
+        sendMessage={sendMessage}
+        connectToSecurEye={handleJoinRoom}
+        acceptVideoStream={handleNegoNeeded}
+      />
       <div>
-        <button onClick={sendMessage}>send message</button>
-        <button onClick={handleJoinRoom}>Join Room</button>
-        <button onClick={handleNegoNeeded}>Call</button>
-        <div>
-          message:
-          <input value={message} onChange={(e) => setMessage(e.target.value)} />
+        <div className="fixed right-1 top-1">
+          {isConnected ? (
+            <Rings height={50} color="green" />
+          ) : (
+            <Rings height={50} color="red" />
+          )}
         </div>
-        {isConnected ? (
-          <p>Connected to server</p>
-        ) : (
-          <p>Not connected to server</p>
-        )}
         <div>
           {" "}
-          <div className="grid w-full  h-screen gap-4 md:gap-8 lg:grid-cols-[300px_1fr]">
+          <div className="grid w-full mt-16 px-2 m-auto h-screen gap-4 md:gap-8 lg:grid-cols-[300px_1fr]">
             <div className="grid gap-4 md:grid-rows-2">
               <div className="grid gap-4">
                 <Card>
