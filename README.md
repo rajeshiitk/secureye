@@ -66,3 +66,166 @@ Secureye is Nextjs web application that provides an admin panel for managing IoT
 | Admin Desktop                            | Admin Desktop settings                                    |
 | ---------------------------------------- | --------------------------------------------------------- |
 | ![Admin](public/demo/admin-desktop.jpeg) | ![Admin settings](public/demo/admin-desktop-settings.png) |
+
+## Basic NodeMU server Setup
+
+```bash
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <Servo.h>
+#include <DHT.h>
+#define DHTPIN D2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+
+Servo myservo;
+
+
+// Replace with your network credentials
+const char* ssid = "<wifi name>";
+const char* password = "<password>";
+
+
+const int output = D2;
+const int FAN_PIN = D6;
+const int LED_PIN = D7;
+
+
+
+String sliderValue = "0";
+String fanSpeedValue = "0";
+String ledstatus ="off";
+
+
+const char* PARAM_INPUT = "value";
+
+
+// Create AsyncWebServer object on port 80
+AsyncWebServer server(80);
+
+void setup(){
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(FAN_PIN, OUTPUT);
+
+
+  myservo.attach(D3);
+
+  // Serial port for debugging purposes
+Serial.begin(9600);
+
+  analogWrite(output, sliderValue.toInt());
+  analogWrite(FAN_PIN, fanSpeedValue.toInt());
+  // Connect to WiFi
+  WiFi.begin(ssid, password);
+
+  // while wifi not connected yet, print '.'
+  // then after it connected, get out of the loop
+  while (WiFi.status() != WL_CONNECTED) {
+     delay(500);
+     Serial.print("connecting !.");
+  }
+  //print a new line, then print WiFi connected and the IP address
+  Serial.println("");
+  Serial.println("WiFi connected");
+  // Print the IP address
+  Serial.println(WiFi.localIP());
+
+
+  // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "text/plain", "seems okay");
+  });
+
+  // Send a GET request to <ESP_IP>/slider?value=<inputMessage>
+  server.on("/fan", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String inputMessage;
+
+    // GET input1 value on <ESP_IP>/slider?value=<inputMessage>
+    if (request->hasParam("speed")) {
+      inputMessage = request->getParam("speed")->value();
+      fanSpeedValue = inputMessage;
+      // analogWrite(fanSpeed, fanSpeedValue.toInt());
+        analogWrite(FAN_PIN, fanSpeedValue.toInt());
+    }
+    else {
+      inputMessage = "No message sent";
+    }
+    Serial.println(inputMessage);
+
+    request->send(200, "text/plain", "Ok");
+  });
+
+server.on("/light", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String inputMessage;
+
+    // GET input1 value on <ESP_IP>/slider?value=<inputMessage>
+    if (request->hasParam("status")) {
+      inputMessage = request->getParam("status")->value();
+      ledstatus = inputMessage;
+      // analogWrite(fanSpeed, fanSpeedValue.toInt());
+      if(ledstatus == "on"){
+         digitalWrite(LED_PIN, HIGH);
+         }
+      else{
+          digitalWrite(LED_PIN, LOW);    // Turn LED off
+      }
+    }
+    else {
+      inputMessage = "No message sent";
+    }
+    Serial.println(inputMessage);
+
+    request->send(200, "text/plain", "Ok");
+  });
+
+  server.on("/open", HTTP_GET, [] (AsyncWebServerRequest *request) {
+
+    String inputMessage;
+    myservo.write(180);
+
+    request->send(200, "text/plain", "Opened");
+  });
+  server.on("/close", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String inputMessage;
+    myservo.write(-180);
+
+
+    request->send(200, "text/plain", "Closed");
+  });
+DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+
+  // Start server
+  server.begin();
+}
+
+void loop() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  //  float t = 23;
+  // float h = 34;
+  Serial.print("Temperature = ");
+  Serial.println(t);
+  Serial.print("Humidity = ");
+  Serial.println(h);
+
+  if (WiFi.status() == WL_CONNECTED) {
+     WiFiClient client;
+     HTTPClient http;
+    String url = "<YOUR SERVER ADDRESS>/api/sensor?temperature=" + String(t) + "&humidity=" + String(h);
+    http.begin(client, url);
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+      Serial.printf("[HTTP] GET... code: %d\n", httpCode);
+    } else {
+      Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    }
+    http.end();
+  }
+
+  delay(5000);
+}
+
+```
