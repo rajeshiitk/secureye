@@ -23,7 +23,7 @@ Secureye is Nextjs web application that provides an admin panel for managing IoT
 
 ## Architecture Design
 
-![Screenshot 1](public/demo/architecture.png)
+![Architecture](public/demo/architecture.png)
 
 ## Getting Started
 
@@ -56,3 +56,13 @@ Secureye is Nextjs web application that provides an admin panel for managing IoT
 
 - Access the user interface at [http://localhost:3000](http://localhost:3000)
 - Access the admin panel at [http://localhost:3000/admin](http://localhost:3000/admin)
+
+## UI Design
+
+| Admin                           | Admin Settings                                    | Main Settings                                   |
+| ------------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| ![Admin](public/demo/admin.jpg) | ![Admin settings](public/demo/admin-settings.jpg) | ![Main Settings](public/demo/main-settings.jpg) |
+
+| Admin Desktop                            | Admin Desktop settings                                    |
+| ---------------------------------------- | --------------------------------------------------------- |
+| ![Admin](public/demo/admin-desktop.jpeg) | ![Admin settings](public/demo/admin-desktop-settings.png) |
