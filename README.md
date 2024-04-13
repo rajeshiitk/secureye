@@ -1,4 +1,4 @@
-**NOTE:** Please be advised that the main branch exclusively contains the code for object detection only. This decision is made with the intention of deploying the main branch on a serverless architecture. Additionally, the administration panel necessitates WebSocket functionality, inherently unsuitable for deployment on a serverless platform. Consequently, for access to the complete codebase, including the admin dashboard and video streaming capabilities, kindly refer to the dev-only branch.
+**NOTE:** Please be advised that the main branch exclusively contains the code for object detection only. This decision is made with the intention of deploying the main branch on a serverless architecture. Additionally, the administration panel necessitates WebSocket functionality, inherently unsuitable for deployment on a serverless platform. Consequently, for access to the complete codebase including the admin dashboard and video streaming capabilities, kindly refer to the dev-only branch.
 
 # Secureye
 
@@ -10,8 +10,8 @@ Secureye is Nextjs web application that provides an admin panel for managing IoT
 - **Live Video Streaming**: View live video streams from surveillance cameras in real-time using WebRTC and web socket.
 - **Sensor Data Monitoring**: Monitor temperature and humidity sensor data in the admin panel.
 - **Responsive Design**: User interface designed to be responsive and accessible across devices.
-- Real-time object detection using the COCO-SSD model
-- Recording video and taking screenshots
+- Real-time object detection using the COCO-SSD model.
+- Recording video and taking photo and toggle camera.
 
 ## Technologies Used
 
@@ -26,8 +26,7 @@ Secureye is Nextjs web application that provides an admin panel for managing IoT
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/secureye.git
-
+   https://github.com/rajeshiitk/secureye.git
    ```
 
 2. Install dependencies:
