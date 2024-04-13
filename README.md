@@ -21,12 +21,16 @@ Secureye is Nextjs web application that provides an admin panel for managing IoT
 - **Tailwind CSS**: Utility-first CSS framework for quickly building custom designs.
 - **Axios**: Promise-based HTTP client for making API requests.
 
+## Architecture Design
+
+![Screenshot 1](public/demo/architecture.png)
+
 ## Getting Started
 
 1. Clone the repository:
 
    ```bash
-   https://github.com/rajeshiitk/secureye.git
+   git clone https://github.com/rajeshiitk/secureye.git
    ```
 
 2. Install dependencies:
